@@ -8,7 +8,7 @@ import org.springframework.data.mongodb.core.query.TextCriteria;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-import org.vietsearch.essme.model.Expert;
+import org.vietsearch.essme.model.expert.Expert;
 import org.vietsearch.essme.repository.ExpertCustomRepositoryImpl;
 import org.vietsearch.essme.repository.ExpertRepository;
 
@@ -44,7 +44,7 @@ public class ExpertController {
 
     @GetMapping("/{id}")
     public Expert findById(@PathVariable("id") String id) {
-        return expertRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Expert not found", null));
+        return expertRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Expert not found"));
     }
 
     @GetMapping("/field")
@@ -54,30 +54,23 @@ public class ExpertController {
 
     @PutMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
-    public Expert update(@PathVariable("id") String id, @Valid @RequestBody Expert resource) {
-        Expert expert = expertRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found", null));
-        expert.set_id(resource.get_id());
-        expert.setIndex(resource.getIndex());
-        expert.setSource(resource.getSource());
-        return resource;
+    public Expert update(@PathVariable("id") String id, @Valid @RequestBody Expert expert) {
+        expertRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Expert not found"));
+        expert.set_id(id);
+        return expertRepository.save(expert);
     }
-
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Expert createUser(@RequestHeader(value = "accept-language", required = false, defaultValue = "en") String lang, @Valid @RequestBody Expert expert) {
-        System.out.println(lang);
-        expertRepository.save(expert);
+    public Expert createUser(@Valid @RequestBody Expert expert) {
         return expertRepository.save(expert);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
     public void delete(@PathVariable("id") String id) {
-        if (expertRepository.existsById(id)) {
-            expertRepository.deleteById(id);
-        } else {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found", null);
-        }
+        if (!expertRepository.existsById(id))
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
+        expertRepository.deleteById(id);
     }
 }

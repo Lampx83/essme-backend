@@ -6,11 +6,11 @@ import org.springframework.data.mongodb.core.aggregation.Aggregation;
 import org.springframework.data.mongodb.core.aggregation.Fields;
 import org.springframework.data.mongodb.core.aggregation.UnwindOperation;
 import org.springframework.stereotype.Repository;
-import org.vietsearch.essme.model.Expert;
+import org.vietsearch.essme.model.expert.Expert;
 
 import java.util.HashMap;
-import java.util.Map;
 import java.util.List;
+import java.util.Map;
 @Repository
 public class ExpertCustomRepositoryImpl implements ExpertCustomRepository {
     @Autowired
