@@ -1,14 +1,15 @@
 package org.vietsearch.essme.repository;
 
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.mongodb.core.query.TextCriteria;
 import org.springframework.data.mongodb.repository.MongoRepository;
-import org.vietsearch.essme.model.answer_question.Request;
+import org.vietsearch.essme.model.request_response.Request;
 
 import java.util.List;
 
-public interface AnswerQuestionRepository extends MongoRepository<Request,String> {
-    Page<Request> findByTopic(String topic, Pageable pageable);
+public interface RequestResponseRepository extends MongoRepository<Request, String> {
     List<Request> findBy(TextCriteria criteria);
+
+    Page<Request> findByTopic(String topic, PageRequest of);
 }
