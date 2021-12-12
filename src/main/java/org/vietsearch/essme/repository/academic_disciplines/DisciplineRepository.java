@@ -12,12 +12,14 @@ public interface DisciplineRepository extends MongoRepository<Discipline, String
     List<Discipline> findBy(TextCriteria criteria);
 
     @Query("{$or:[" +
-            "{'names.en': {'$regex': /^?0/i}}," +
-            "{'names.vi': {'$regex': /^?0/i}}," +
-            "{'synonyms.vi': {'$regex': /^?0/i}}," +
-            "{'synonyms.en': {'$regex': /^?0/i}}" +
+            "{'names.en': {'$regex': /^?0/i} }," +
+            "{'names.vi': {'$regex': /^?0/i} }," +
+            "{'synonyms.vi': {'$regex': /^?0/i} }," +
+            "{'synonyms.en': {'$regex': /^?0/i} }" +
             "]}")
     List<Discipline> findByNamesOrSynonymsStartsWithIgnoreCase(String text);
+
+    List<Discipline> findByParentIdStartsWithIgnoreCase(String text);
 
     Optional<Discipline> findByNameIgnoreCase(String text);
 }

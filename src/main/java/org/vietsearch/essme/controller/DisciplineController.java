@@ -12,60 +12,71 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import org.vietsearch.essme.model.academic_disciplines.Discipline;
-import org.vietsearch.essme.repository.academic_disciplines.DisciplineCustomRepoImpl;
 import org.vietsearch.essme.repository.academic_disciplines.DisciplineRepository;
 
 import java.util.List;
-import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/discipline")
 public class DisciplineController {
     @Autowired
     private DisciplineRepository disciplineRepository;
-    @Autowired
-    private DisciplineCustomRepoImpl disciplineCustomRepoIpml;
 
     @GetMapping
     public List<Discipline> getDisciplines(@RequestParam(name = "page", defaultValue = "0") int page,
-                                           @RequestParam(name = "size", defaultValue = "20") int size,
-                                           @RequestParam(name = "lang", defaultValue = "en") String lang,
-                                           @RequestParam(name = "sort", defaultValue = "name") String sortAttr,
-                                           @RequestParam(name = "asc", defaultValue = "true") boolean asc) {
-        Sort sort = Sort.by("names");
-        if (sortAttr.equals("name")) {
-            sort = Sort.by("names." + lang);
-        } else if (sortAttr.equals("level")) {
-            sort = Sort.by("level");
-        }
+            @RequestParam(name = "size", defaultValue = "20") int size,
+            @RequestParam(name = "lang", defaultValue = "en") String lang,
+            @RequestParam(name = "asc", defaultValue = "true") boolean asc) {
+        Sort sort = Sort.by("names." + lang);
+
         sort = asc ? sort.ascending() : sort.descending();
 
         Page<Discipline> disciplinePage = disciplineRepository.findAll(PageRequest.of(page, size, sort));
         return disciplinePage.getContent();
     }
 
-    @GetMapping("/{_id}")
+    @GetMapping("/id/{_id}")
     public Discipline getDisciplineById(@PathVariable("_id") String _id) {
-        return disciplineRepository.findById(_id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Discipline not found"));
+        return disciplineRepository.findById(_id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Discipline not found"));
+    }
+
+    @GetMapping("/{parent}")
+    public List<Discipline> parent(@PathVariable("parent") String parent) {
+        return disciplineRepository.findByParentIdStartsWithIgnoreCase(parent);
     }
 
     @GetMapping("/search")
     public List<Discipline> searchDisciplines(@RequestParam("text") String text) {
         TextCriteria criteria = TextCriteria.forDefaultLanguage().caseSensitive(false).matchingPhrase(text);
         List<Discipline> list = disciplineRepository.findBy(criteria);
-        if(list.isEmpty()){
+        if (list.isEmpty()) {
             list = disciplineRepository.findByNamesOrSynonymsStartsWithIgnoreCase(text);
         }
         return list;
     }
 
-    @GetMapping("/parent")
-    public Object parent(@RequestParam(name = "name", required = false) String name) {
-        if (!Objects.equals(name, null)) {
-            return disciplineCustomRepoIpml.findByParentId(name);
-        } else {
-            return disciplineCustomRepoIpml.getNumberOfDisciplinesInEachParent();
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public Discipline addDiscipline(@RequestBody Discipline discipline) {
+        if (isNameAlreadyUsed(discipline.getName())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Name " + discipline.getName() + " is already used");
         }
+        return disciplineRepository.insert(discipline);
+    }
+
+    @PutMapping("/{_id}")
+    @ResponseStatus(value = HttpStatus.OK)
+    public Discipline updateById(@PathVariable("_id") String _id, @RequestBody Discipline discipline) {
+        disciplineRepository.findById(_id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Discipline not found"));
+        if (isNameAlreadyUsed(discipline.getName())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Name " + discipline.getName() + " is already used");
+        }
+        discipline.set_id(_id);
+        return disciplineRepository.save(discipline);
     }
 
     @DeleteMapping("/{_id}")
@@ -74,28 +85,7 @@ public class DisciplineController {
         disciplineRepository.deleteById(_id);
     }
 
-    @PutMapping("/{_id}")
-    @ResponseStatus(value = HttpStatus.OK)
-    public Discipline updateById(@PathVariable("_id") String _id, @RequestBody Discipline discipline) {
-        disciplineRepository.findById(_id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Discipline not found"));
-        if(isNameAlreadyUsed(discipline.getName())){
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Name " + discipline.getName()+ " is already used");
-        }
-        discipline.set_id(_id);
-        return disciplineRepository.save(discipline);
-    }
-
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public Discipline addDiscipline(@RequestBody Discipline discipline) {
-        if(isNameAlreadyUsed(discipline.getName())){
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Name " + discipline.getName()+ " is already used");
-        }
-        return disciplineRepository.insert(discipline);
-    }
-
-    private boolean isNameAlreadyUsed(String name){
+    private boolean isNameAlreadyUsed(String name) {
         return disciplineRepository.findByNameIgnoreCase(name).isPresent();
     }
 }

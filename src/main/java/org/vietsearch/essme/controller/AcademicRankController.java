@@ -14,7 +14,6 @@ import org.vietsearch.essme.repository.academic_rank.AcademicRankRepository;
 
 import java.util.List;
 
-
 @RestController
 @RequestMapping("/api/academic-rank")
 public class AcademicRankController {
@@ -23,29 +22,29 @@ public class AcademicRankController {
 
     @GetMapping
     public List<AcademicRank> getAcademicRanks(@RequestParam(name = "page", defaultValue = "0") int page,
-                                               @RequestParam(name = "size", defaultValue = "20") int size,
-                                               @RequestParam(name = "asc", defaultValue = "true") boolean asc) {
+            @RequestParam(name = "size", defaultValue = "20") int size,
+            @RequestParam(name = "asc", defaultValue = "true") boolean asc) {
         Sort sort = Sort.by("name");
         sort = asc ? sort.ascending() : sort.descending();
 
         Page<AcademicRank> rankPage = rankRepository.findAll(
-                PageRequest.of(page, size, sort)
-        );
+                PageRequest.of(page, size, sort));
 
         return rankPage.getContent();
     }
 
     @GetMapping("/{_id}")
     public AcademicRank getById(@PathVariable("_id") String _id) {
-        return rankRepository.findById(_id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Rank not found"));
+        return rankRepository.findById(_id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Rank not found"));
     }
 
     @GetMapping("/search")
     public List<AcademicRank> searchAcademicRank(@RequestParam(name = "text") String text) {
         List<AcademicRank> list = rankRepository.findBy(
-                TextCriteria.forDefaultLanguage().caseSensitive(false).matchingPhrase(text)
-        );
-        if(list.isEmpty()) list = rankRepository.findByNameOrSynonymsStartsWithIgnoreCase(text);
+                TextCriteria.forDefaultLanguage().caseSensitive(false).matchingPhrase(text));
+        if (list.isEmpty())
+            list = rankRepository.findByNameOrSynonymsStartsWithIgnoreCase(text);
         return list;
     }
 
@@ -58,22 +57,23 @@ public class AcademicRankController {
         return rankRepository.insert(academicRank);
     }
 
-    @DeleteMapping("/{_id}")
-    @ResponseStatus(HttpStatus.OK)
-    public void deleteById(@PathVariable("_id") String _id) {
-        rankRepository.deleteById(_id);
-    }
-
     @PutMapping("/{_id}")
     @ResponseStatus(HttpStatus.OK)
     public AcademicRank updateById(@PathVariable("_id") String _id,
-                                   @RequestBody AcademicRank academicRank) {
-        rankRepository.findById(_id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Rank not found"));
+            @RequestBody AcademicRank academicRank) {
+        rankRepository.findById(_id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Rank not found"));
         if (isNameAlreadyUsed(academicRank.getName())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Name is already used");
         }
         academicRank.set_id(_id);
         return rankRepository.save(academicRank);
+    }
+
+    @DeleteMapping("/{_id}")
+    @ResponseStatus(HttpStatus.OK)
+    public void deleteById(@PathVariable("_id") String _id) {
+        rankRepository.deleteById(_id);
     }
 
     private boolean isNameAlreadyUsed(String name) {
