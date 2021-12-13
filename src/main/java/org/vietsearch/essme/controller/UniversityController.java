@@ -1,8 +1,9 @@
 package org.vietsearch.essme.controller;
 
+import io.swagger.v3.oas.annotations.Parameter;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.query.TextCriteria;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -12,6 +13,7 @@ import org.vietsearch.essme.repository.UniversityRepository;
 
 import javax.validation.Valid;
 import java.util.List;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/universities")
@@ -29,8 +31,18 @@ public class UniversityController {
     }
 
     @GetMapping
-    public Page<University> getUniversities(@RequestParam(value = "page", defaultValue = "0") int page, @RequestParam(value = "size", defaultValue = "20") int size, @RequestParam(value = "sort", required = false) String sort) {
-        return universityRepository.findAll(PageRequest.of(page, size));
+    public List<University> getUniversities(@RequestParam(name = "page", defaultValue = "0") int page,
+                                            @RequestParam(name = "size", defaultValue = "20") int size,
+                                            @RequestParam(name = "sortBy", defaultValue = "name") @Parameter(description = "name | rank") String sortBy,
+                                            @RequestParam(name = "lang", defaultValue = "en") String lang,
+                                            @RequestParam(name = "rankBy", defaultValue = "qs") @Parameter(description = "qs | arwu | the") String rankBy,
+                                            @RequestParam(name = "asc", defaultValue = "true") boolean asc) {
+        Sort sort = Sort.by("names." + lang);
+        if (Objects.equals("rank", sortBy))
+            sort = Sort.by("ranks." + rankBy);
+        if (!asc)
+            sort.descending();
+        return universityRepository.findAll(PageRequest.of(page, size, sort)).getContent();
     }
 
     @GetMapping("/{id}")
@@ -48,11 +60,7 @@ public class UniversityController {
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
     public void delete(@PathVariable("id") String id) {
-        if (universityRepository.existsById(id)) {
-            universityRepository.deleteById(id);
-        } else {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "University not found");
-        }
+        universityRepository.deleteById(id);
     }
 
     @PutMapping("/{id}")

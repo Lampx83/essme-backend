@@ -2,6 +2,7 @@ package org.vietsearch.essme.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.query.TextCriteria;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -28,11 +29,14 @@ public class CorporateTitleController {
     }
 
     @GetMapping
-    public List<Corporate> getCorporates(@RequestParam(value = "limit", defaultValue = "-1") int limit) {
-        if (limit == -1) {
-            return corporateRepository.findAll();
-        }
-        return corporateRepository.findAll(PageRequest.of(0, limit)).getContent();
+    public List<Corporate> getCorporates(@RequestParam(name = "page", defaultValue = "0") int page,
+                                         @RequestParam(name = "size", defaultValue = "20") int size,
+                                         @RequestParam(name = "lang", defaultValue = "en") String lang,
+                                         @RequestParam(name = "asc", defaultValue = "true") boolean asc) {
+        Sort sort = Sort.by("names." + lang);
+        if (!asc)
+            sort.descending();
+        return corporateRepository.findAll(PageRequest.of(page, size, sort)).getContent();
     }
 
     @GetMapping("/{id}")
@@ -50,11 +54,7 @@ public class CorporateTitleController {
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
     public void delete(@PathVariable("id") String id) {
-        if (corporateRepository.existsById(id)) {
             corporateRepository.deleteById(id);
-        } else {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Corporate not found");
-        }
     }
 
     @PutMapping("/{id}")

@@ -9,10 +9,10 @@
         <relativePath/>
     </parent>
     <groupId>org.vietsearch</groupId>
-    <artifactId>ESSME</artifactId>
+    <artifactId>essme</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>ESSME</name>
-    <description>ESSME</description>
+    <name>essme</name>
+    <description>essme</description>
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>

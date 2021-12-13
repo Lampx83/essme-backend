@@ -12,7 +12,7 @@ import java.util.List;
 public class Source {
 
     @JsonProperty("thumbnail")
-    private Object thumbnail;
+    private String thumbnail;
 
     @JsonProperty("types")
     private List<String> types;

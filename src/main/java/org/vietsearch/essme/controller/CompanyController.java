@@ -1,7 +1,7 @@
 package org.vietsearch.essme.controller;
 
+import io.swagger.v3.oas.annotations.Parameter;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.query.TextCriteria;
@@ -24,32 +24,34 @@ public class CompanyController {
 
     @Autowired
     private CompanyCustomRepoImpl customRepo;
+  
+    @GetMapping("/search")
+    public List<Company> searchCompanies(@RequestParam("text") String text) {
+        List<Company> list = companyRepository.findBy(
+                TextCriteria.forDefaultLanguage().caseSensitive(false).matchingPhrase(text));
+
+        if (list.isEmpty())
+            list = companyRepository.findByNameOrIndustriesStartsWithIgnoreCase(text);
+        return list;
 
     @GetMapping
     public List<Company> getCompanies(@RequestParam(name = "page", defaultValue = "0") int page,
                                       @RequestParam(name = "size", defaultValue = "20") int size,
-                                      @RequestParam(name = "sort", defaultValue = "name") String sortAttr,
-                                      @RequestParam(name = "lang", defaultValue = "en") String lang, // en, vi, fr, de
-                                      @RequestParam(name = "rank", defaultValue = "ValueToday") String rank, // ValueToday, Fortune, Forbes
+                                      @RequestParam(name = "sortBy", defaultValue = "name") @Parameter(description = "name | rank") String sortBy,
+                                      @RequestParam(name = "lang", defaultValue = "en") String lang, //en, vi, fr, de
+                                      @RequestParam(name = "rankBy", defaultValue = "ValueToday") @Parameter(description = "ValueToday | Fortune | Forbes") String rankBy,
                                       @RequestParam(name = "asc", defaultValue = "true") boolean asc) {
-        Sort sort = null;
-        if (Objects.equals(sortAttr, "rank")) {
-            sort = Sort.by("ranks." + rank);
-        } else {
-            sort = Sort.by("names." + lang);
-        }
-        sort = asc ? sort.ascending() : sort.descending();
-
-        Page<Company> companyPage = companyRepository.findAll(
-                PageRequest.of(page, size, sort));
-
-        return companyPage.getContent();
+        Sort sort = Sort.by("names." + lang);
+        if (Objects.equals("rank", sortBy))
+            sort = Sort.by("ranks." + rankBy);
+        if (!asc)
+            sort.descending();
+        return companyRepository.findAll(PageRequest.of(page, size, sort)).getContent();
     }
 
-    @GetMapping("/id/{_id}")
+    @GetMapping("/{_id}")
     public Company getById(@PathVariable("_id") String _id) {
-        return companyRepository.findById(_id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Company not found"));
+        return companyRepository.findById(_id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Company not found"));
     }
 
     @GetMapping("/{country}/{industry}/{rank}")
@@ -60,44 +62,31 @@ public class CompanyController {
         return customRepo.getCompanyByCountryIndustryAndRank(country, industry, rank, asc);
     }
 
-    @GetMapping("/search")
-    public List<Company> searchCompanies(@RequestParam("text") String text) {
-        List<Company> list = companyRepository.findBy(
-                TextCriteria.forDefaultLanguage().caseSensitive(false).matchingPhrase(text));
-
-        if (list.isEmpty())
-            list = companyRepository.findByNameOrIndustriesStartsWithIgnoreCase(text);
-        return list;
-    }
-
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public Company addCompany(@RequestBody Company company) {
-        if (isNameAlreadyUsed(company.getName())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Name is already used");
-        }
-        return companyRepository.insert(company);
-    }
-
-    @PutMapping("/{_id}")
-    @ResponseStatus(HttpStatus.OK)
-    public Company updateById(@PathVariable("_id") String _id, @RequestBody Company company) {
-        companyRepository.findById(_id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Company not found"));
-        if (isNameAlreadyUsed(company.getName())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Name is already used");
-        }
-        company.set_id(_id);
-        return companyRepository.save(company);
-    }
-
     @DeleteMapping("/{_id}")
     @ResponseStatus(HttpStatus.OK)
     public void deleteById(@PathVariable("_id") String _id) {
         companyRepository.deleteById(_id);
     }
 
-    private boolean isNameAlreadyUsed(String name) {
-        return companyRepository.findByNameIgnoreCase(name).isPresent();
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public Company addCompany(@RequestBody Company company) {
+        checkExistsByName(company.getName());
+        return companyRepository.insert(company);
+    }
+
+    @PutMapping("/{_id}")
+    @ResponseStatus(HttpStatus.OK)
+    public Company updateById(@PathVariable("_id") String _id, @RequestBody Company company) {
+        companyRepository.findById(_id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Company not found"));
+        checkExistsByName(company.getName());
+        company.set_id(_id);
+        return companyRepository.save(company);
+    }
+
+    private void checkExistsByName(String name) {
+        if (companyRepository.findByNameIgnoreCase(name).isPresent()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Name is already used");
+        }
     }
 }

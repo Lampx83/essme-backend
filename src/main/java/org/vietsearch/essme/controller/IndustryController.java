@@ -1,7 +1,9 @@
 package org.vietsearch.essme.controller;
 
+import io.swagger.v3.oas.annotations.Parameter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.query.TextCriteria;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -29,11 +31,16 @@ public class IndustryController {
     }
 
     @GetMapping
-    public List<Industry> getIndustries(@RequestParam(value = "limit", defaultValue = "-1") int limit) {
-        if (limit == -1) {
-            return industryRepository.findAll();
-        }
-        return industryRepository.findAll(PageRequest.of(0, limit)).getContent();
+    public List<Industry> getIndustries(@RequestParam(name = "page", defaultValue = "0") int page,
+                                        @RequestParam(name = "size", defaultValue = "20") int size,
+                                        @RequestParam(name = "sortBy", defaultValue = "name") @Parameter(description = "name | rank") String sortBy,
+                                        @RequestParam(name = "lang", defaultValue = "en") String lang,
+                                        @RequestParam(name = "asc", defaultValue = "true") boolean asc) {
+        Sort sort = Sort.by("names." + lang);
+        if ("level".equals(sortBy))
+            sort = Sort.by("level");
+        if (!asc) sort.descending();
+        return industryRepository.findAll(PageRequest.of(page, size, sort)).getContent();
     }
 
     @PostMapping
@@ -46,11 +53,7 @@ public class IndustryController {
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
     public void delete(@PathVariable("id") String id) {
-        if (industryRepository.existsById(id)) {
             industryRepository.deleteById(id);
-        } else {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Industry not found");
-        }
     }
 
     @PutMapping("/{id}")
