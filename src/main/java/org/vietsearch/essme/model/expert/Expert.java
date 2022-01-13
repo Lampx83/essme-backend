@@ -15,14 +15,14 @@ import javax.validation.constraints.NotNull;
 public class Expert {
 
     @Id
-    @JsonProperty("_id")
+    @JsonProperty(value = "_id", access = JsonProperty.Access.READ_ONLY)
     private String _id;
 
     @JsonProperty("image")
     private String image;
 
     @Field(name = "other link")
-    @JsonProperty("other link")
+    @JsonProperty("other_link")
     private String otherLink;
 
     @JsonProperty("address")
@@ -36,7 +36,7 @@ public class Expert {
 
     @NotNull
     @Field(name = "degree index")
-    @JsonProperty("degree index")
+    @JsonProperty("degree_index")
     private double degreeIndex;
 
     @JsonProperty("birth")
@@ -51,7 +51,7 @@ public class Expert {
     private String name;
 
     @Field(name = "research area")
-    @JsonProperty("research area")
+    @JsonProperty("research_area")
     private String researchArea;
 
     @JsonProperty("company")
@@ -65,6 +65,6 @@ public class Expert {
     private String email;
 
     @Field(name = "link profile")
-    @JsonProperty("link profile")
+    @JsonProperty("link_profile")
     private String linkProfile;
 }
