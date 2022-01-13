@@ -9,10 +9,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class BackupServiceImpl implements BackupService {
@@ -33,7 +31,7 @@ public class BackupServiceImpl implements BackupService {
     }
 
     @Override
-    public String dump() {
+    public Optional<String> dump() {
         String archiveName = String.valueOf(new Date());
         List<String> command = Arrays.asList(
                 "mongodump",
@@ -48,9 +46,9 @@ public class BackupServiceImpl implements BackupService {
 
             //WAITING FOR A RETURN FROM THE PROCESS WE STARTED
             int exitCode = process.waitFor();
-            return exitCode == 0 ? archiveName : "";
+            return exitCode == 0 ? Optional.of(archiveName) : Optional.empty();
         } catch (InterruptedException | IOException e) {
-            return "";
+            return Optional.empty();
         }
     }
 
@@ -85,9 +83,13 @@ public class BackupServiceImpl implements BackupService {
     }
 
     @Override
-    public String[] list() {
-        File file = root.toFile();
-        return file.list();
+    public List<String> list() {
+        File[] files = root.toFile().listFiles();
+        assert files != null;
+        return Arrays.stream(files)
+                .sorted(Comparator.comparingLong(File::lastModified).reversed())
+                .map(File::getName)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -96,13 +98,13 @@ public class BackupServiceImpl implements BackupService {
     }
 
     @Override
-    public String save(MultipartFile file) {
-        if (file == null) return "";
+    public Optional<String> save(MultipartFile file) {
+        if (file == null) return Optional.empty();
         try {
             file.transferTo(root.resolve(Objects.requireNonNull(file.getOriginalFilename())));
-            return file.getOriginalFilename();
+            return Optional.ofNullable(file.getOriginalFilename());
         } catch (IOException e) {
-            return "";
+            return Optional.empty();
         }
     }
 }

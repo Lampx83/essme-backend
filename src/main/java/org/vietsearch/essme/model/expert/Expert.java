@@ -68,3 +68,9 @@ public class Expert {
     @JsonProperty("link_profile")
     private String linkProfile;
 }
+
+    @JsonProperty("uid")
+    @Field("uid")
+    // uid is id provided by firebase
+    private String uid;
+}

@@ -3,19 +3,21 @@ package org.vietsearch.essme.service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
+import java.util.List;
+import java.util.Optional;
 
 public interface BackupService {
     void init();
 
-    String dump();
+    Optional<String> dump();
 
     boolean restore(String archiveName);
 
-    String[] list();
+    List<String> list();
 
     boolean delete(String filename);
 
     File load(String filename);
 
-    String save(MultipartFile file);
+    Optional<String> save(MultipartFile file);
 }

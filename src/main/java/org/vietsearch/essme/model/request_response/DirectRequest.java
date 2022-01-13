@@ -8,49 +8,55 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
-
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import java.util.Date;
 import java.util.List;
+import static com.fasterxml.jackson.annotation.JsonProperty.Access.*;
 
 @Data
-@Document("request_response")
-public class Request {
+@Document("direct_request")
+public class DirectRequest {
     @Id
-    @JsonProperty(value = "_id", access = JsonProperty.Access.READ_ONLY)
+    @JsonProperty(value = "_id", access = READ_ONLY)
     private String _id;
 
     @CreatedDate
-    @JsonProperty(value = "created_at", access = JsonProperty.Access.READ_ONLY)
-    private Date createdAt;
+    @JsonProperty(value = "create_at", access = READ_ONLY)
+    @Field("create_at")
+    private Date createAt;
 
     @LastModifiedDate
-    @JsonProperty(value = "updated_at", access = JsonProperty.Access.READ_ONLY)
-    private Date updatedAt;
+    @JsonProperty(value = "last_updated_at", access = READ_WRITE)
+    @Field("last_updated_at")
+    private Date lastUpdatedAt;
 
     @JsonProperty("topic")
-    @Field("topic")
     private List<String> topic;
 
-    @JsonProperty("Title")
-    @Field("Title")
+    @JsonProperty("title")
     private String title;
 
     @JsonProperty("content")
-    @Field("content")
     @NotBlank(message = "{vi=\"nội dung trống\", en=\"content is empty\"}")
     private String content;
 
-    @JsonProperty("response")
-    private List<Response> responses;
+    @JsonProperty("responses")
+    private List<String> responses;
+
+    @JsonProperty("expert_id")
+    @Field("expert_id")
+    private String expertId;
 
     @JsonProperty("customer_id")
     @Field("customer_id")
-    @NotNull
     private String customerId;
 
-    @JsonProperty("uid")
-    @Field("uid")
-    private String uid;
+    @JsonProperty("status")
+    private Status status;
+
+    public enum Status{
+        ACCEPTED,
+        DENIED,
+        CONSIDERING
+    }
 }

@@ -9,6 +9,7 @@ import org.springframework.data.mongodb.core.query.TextCriteria;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import org.vietsearch.essme.filter.AuthenticatedRequest;
 import org.vietsearch.essme.model.expert.Expert;
 import org.vietsearch.essme.repository.experts.ExpertCustomRepositoryImpl;
 import org.vietsearch.essme.repository.experts.ExpertRepository;
@@ -60,23 +61,37 @@ public class ExpertController {
 
     @PutMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
-    public Expert update(@PathVariable("id") String id, @Valid @RequestBody Expert expert) {
+    public Expert update(AuthenticatedRequest request, @PathVariable("id") String id, @Valid @RequestBody Expert expert) {
+        String uuid = request.getUserId();
         expertRepository.findById(id).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Expert not found"));
+        if(!matchExpert(uuid, id)){
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Permission denied", null);
+        }
+        expert.setUid(uuid);
         expert.set_id(id);
         return expertRepository.save(expert);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Expert createUser(@Valid @RequestBody Expert expert) {
+    public Expert createUser(AuthenticatedRequest request, @Valid @RequestBody Expert expert) {
+        expert.setUid(request.getUserId());
         return expertRepository.save(expert);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
-    public void delete(@PathVariable("id") String id) {
+    public void delete(AuthenticatedRequest authenticatedRequest,@PathVariable("id") String id) {
+        String uuid = authenticatedRequest.getUserId();
         if (!expertRepository.existsById(id))
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
+        if(!matchExpert(uuid, id)){
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Permission denied", null);
+        }
         expertRepository.deleteById(id);
+    }
+
+    private boolean matchExpert(String uuid, String expertChangedId){
+        return uuid.equals(expertChangedId);
     }
 }

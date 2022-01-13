@@ -35,4 +35,8 @@ public class Response {
     @LastModifiedDate
     @JsonProperty(value = "updated_at", access = JsonProperty.Access.READ_ONLY)
     private Date updatedAt;
+
+    @JsonProperty("uid")
+    @Field("uid")
+    private String uid;
 }

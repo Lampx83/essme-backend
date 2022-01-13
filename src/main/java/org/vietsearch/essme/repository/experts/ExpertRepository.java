@@ -8,4 +8,6 @@ import java.util.List;
 
 public interface ExpertRepository extends MongoRepository<Expert, String> {
     List<Expert> findBy(TextCriteria criteria);
+    // get Expert form firebase uid
+    Expert findByUid(String uid);
 }
